@@ -20,8 +20,11 @@ const server = await createServer({
 
                     res.setHeader("Content-Type", "text/html; charset=UTF-8");
                     res.end(bootDocument("/src/main.ts"));
-                })
+                });
             }
         }
     ]
-})
+});
+
+await server.listen();
+server.printUrls();
