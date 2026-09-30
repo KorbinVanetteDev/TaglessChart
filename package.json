@@ -8,5 +8,15 @@
   },
   "keywords": [],
   "author": "Korbinvanettedev",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "@xyflow/react": "^12.12.0",
+    "lucide-react": "^1.49.0",
+    "mermaid": "^12.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  }
 }
