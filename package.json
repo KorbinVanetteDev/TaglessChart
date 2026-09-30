@@ -1,22 +1,22 @@
 {
-  "name": "tagless",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "Flowless",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node scripts/dev-server.js",
+    "build": "tsc && vite build",
+    "preview": "node scripts/preview-server.js",
+    "check:no-authored-tags": "node scripts/check-no-authored-tags.js"
   },
-  "keywords": [],
-  "author": "Korbinvanettedev",
-  "license": "ISC",
   "dependencies": {
-    "@vitejs/plugin-react": "^6.1.1",
-    "@xyflow/react": "^12.12.0",
-    "lucide-react": "^1.49.0",
-    "mermaid": "^12.0.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "@vitejs/plugin-react": "latest",
+    "@xyflow/react": "latest",
+    "lucide-react": "latest",
+    "mermaid": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
   }
 }
