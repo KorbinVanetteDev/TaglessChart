@@ -2,6 +2,14 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { starterProject } from "./flowTypes";
 import { projectToMermaid, validateMermaid } from "./mermaidCodec";
+import "@xyflow/react/dist/style.css";
+import {
+    Background,
+    Controls,
+    ReactFlow,
+    type Edge,
+    type Node,
+} from "@xyflow/react";
 
 const h = React.createElement;
 
@@ -24,6 +32,20 @@ function App() {
 
         validate();
     }, [mermaidText]);
+
+    const flowNodes: Node[] = starterProject.nodes.map((node) => ({
+        id: node.id,
+        position: { x: node.x, y: node.y },
+        data: { label: node.label },
+        type: "default",
+    }));
+
+    const flowEdges: Edge[] = starterProject.edges.map((edge) => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        label: edge.label || undefined,
+    }));
 
     return h(
         "main",
@@ -82,7 +104,28 @@ function App() {
                 },
                 "Make a flowchart!"
             ),
-
+            h(
+                "div",
+                {
+                    style: {
+                        height: "360px",
+                        margin: "24px 0 0",
+                        border: "1px solid oklch(88% 0.018 255)",
+                        borderRadius: "12px",
+                        overflow: "hidden",
+                    }
+                },
+                h(
+                    ReactFlow,
+                    {
+                        nodes: flowNodes,
+                        edges: flowEdges,
+                        fitView: true
+                    },
+                    h(Background),
+                    h(Controls)
+                )
+            ),
             h(
                 "pre",
                 {
@@ -107,11 +150,7 @@ function App() {
                     style: {
                         margin: "12px 0 0",
                         color:
-                            isValid === null
-                                ? "inherit"
-                                : isValid
-                                    ? "oklch(45% 0.13 150)"
-                                    : "oklch(52% 0.16 25)",
+                            isValid === null ? "inherit" : isValid ? "oklch(45% 0.13 150)" : "oklch(52% 0.16 25)",
                     },
                 },
                 validationMessage
