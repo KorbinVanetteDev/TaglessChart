@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { starterProject } from "./flowTypes";
 import { projectToMermaid, validateMermaid } from "./mermaidCodec";
-
+import type { NodeKind } from "./flowTypes";
 import "@xyflow/react/dist/style.css";
 
 import {
@@ -22,8 +22,13 @@ import {
 
 const h = React.createElement;
 
+type FlowNodeData = {
+    label: string;
+    kind: NodeKind;
+}
+
 function App() {
-    const initialNodes = useMemo<Node[]>(
+    const initialNodes = useMemo<Node<FlowNodeData>[]>(
         () =>
             starterProject.nodes.map((node) => ({
                 id: node.id,
@@ -51,10 +56,10 @@ function App() {
                     type: MarkerType.ArrowClosed
                 }
             })),
-        []
-    );
+            []
+        );
 
-    const [nodes, setNodes] = useState<Node[]>(initialNodes);
+    const [nodes, setNodes] = useState<Node<FlowNodeData>[]>(initialNodes);
     const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
     const liveProject = useMemo(
@@ -65,13 +70,7 @@ function App() {
             nodes: nodes.map((node) => ({
                 id: node.id,
 
-                kind:
-                    (node.data.kind as
-                        | "process"
-                        | "decision"
-                        | "startEnd"
-                        | "note") ?? "process",
-
+                kind: node.data.kind,
                 label: String(
                     node.data.label ?? "Untitled"
                 ),
@@ -107,13 +106,13 @@ function App() {
     const [isValid, setIsValid] =
         useState<boolean | null>(null);
 
-    function onNodesChange(changes: NodeChange[]) {
+    function onNodesChange(changes: NodeChange<Node<FlowNodeData>>[]) {
         setNodes((current) =>
             applyNodeChanges(changes, current)
         );
     }
 
-    function onEdgesChange(changes: EdgeChange[]) {
+    function onEdgesChange(changes: EdgeChange<Edge>[]) {
         setEdges((current) =>
             applyEdgeChanges(changes, current)
         );
@@ -134,8 +133,8 @@ function App() {
         );
     }
 
-    function addNode(kind: "startEnd" | "process" | "decision" | "note") {
-        const id = `${kind}_$Date.now()}`;
+    function addNode(kind: NodeKind) {
+        const id = `${kind}_${Date.now()}`;
 
         setNodes((current) => [
             ...current,
@@ -147,7 +146,8 @@ function App() {
                     y: 120 + current.length * 24
                 },
                 data: {
-                    label: kind === "startEnd" ? "Start/End" : kind === "decision" ? "Decision?" : kind === "note" ? "Note" : "Process"
+                    label: kind === "startEnd" ? "Start/End" : kind === "decision" ? "Decision?" : kind === "note" ? "Note" : "Process",
+                    kind
                 }
             }
         ]);
