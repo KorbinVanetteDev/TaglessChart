@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { starterProject } from "./flowTypes";
 import { projectToMermaid, validateMermaid } from "./mermaidCodec";
@@ -7,14 +7,53 @@ import {
     Background,
     Controls,
     ReactFlow,
+    addEdge,
+    applyEdgeChanges,
+    applyNodeChanges,
+    type Connection,
     type Edge,
+    type EdgeChange,
     type Node,
+    type NodeChange
 } from "@xyflow/react";
 
 const h = React.createElement;
 
 function App() {
     const mermaidText = projectToMermaid(starterProject);
+
+    const initialNodes = useMemo<Node[]>(() =>
+        starterProject.nodes.map((node) => ({
+            id: node.id,
+            position: { x: node.x, y: node.y },
+            data: { label: node.label },
+            type: "default"
+        })),
+    []);
+
+    const initialEdges = useMemo<Edge[]>(() => 
+        starterProject.edges.map((edge) => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            label: edge.label || undefined
+        })),
+    [],);
+
+    const [nodes, setNodes] = useState<Node[]>(initialNodes);
+    const [edges, setEdges] = useState<Edge[]>(initialEdges);
+
+    function onNodesChange(changes: NodeChange[]) {
+        setNodes((current) => applyNodeChanges(changes, current));
+    }
+
+    function onEdgesChange(changes: EdgeChange[]) {
+        setEdges((current) => applyEdgeChanges(changes, current));
+    }
+
+    function onConnect(connection: Connection) {
+        setEdges((current) => addEdge({...connection, id: `edge_${connection.source}_${connection.target}_${Date.now()}`}, current));
+    }
 
     const [validationMessage, setValidationMessage] =
         useState("Validating...");
@@ -118,8 +157,11 @@ function App() {
                 h(
                     ReactFlow,
                     {
-                        nodes: flowNodes,
-                        edges: flowEdges,
+                        nodes,
+                        edges,
+                        onNodesChange,
+                        onEdgesChange,
+                        onConnect,
                         fitView: true
                     },
                     h(Background),
