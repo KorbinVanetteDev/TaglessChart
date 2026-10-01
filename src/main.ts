@@ -1,12 +1,30 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { starterProject } from "./flowTypes";
-import { projectToMermaid } from "./mermaidCodec";
+import { projectToMermaid, validateMermaid } from "./mermaidCodec";
 
 const h = React.createElement;
 
 function App() {
     const mermaidText = projectToMermaid(starterProject);
+
+    const [validationMessage, setValidationMessage] =
+        useState("Validating...");
+
+    const [isValid, setIsValid] =
+        useState<boolean | null>(null);
+
+    useEffect(() => {
+        async function validate() {
+            const result = await validateMermaid(mermaidText);
+
+            setValidationMessage(result.message);
+            setIsValid(result.ok);
+        }
+
+        validate();
+    }, [mermaidText]);
+
     return h(
         "main",
         {
@@ -30,6 +48,7 @@ function App() {
                     background: "oklch(100% 0)",
                 },
             },
+
             h(
                 "p",
                 {
@@ -41,6 +60,7 @@ function App() {
                 },
                 "Hello, World!"
             ),
+
             h(
                 "h1",
                 {
@@ -51,6 +71,7 @@ function App() {
                 },
                 "Welcome to Tagless!"
             ),
+
             h(
                 "p",
                 {
@@ -61,6 +82,7 @@ function App() {
                 },
                 "Make a flowchart!"
             ),
+
             h(
                 "pre",
                 {
@@ -74,9 +96,25 @@ function App() {
                         fontSize: "14px",
                         lineHeight: 1.4,
                         whiteSpace: "pre-wrap",
-                    }
+                    },
                 },
                 mermaidText
+            ),
+
+            h(
+                "p",
+                {
+                    style: {
+                        margin: "12px 0 0",
+                        color:
+                            isValid === null
+                                ? "inherit"
+                                : isValid
+                                    ? "oklch(45% 0.13 150)"
+                                    : "oklch(52% 0.16 25)",
+                    },
+                },
+                validationMessage
             )
         )
     );
