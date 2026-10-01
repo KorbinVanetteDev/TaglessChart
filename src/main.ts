@@ -4,6 +4,9 @@ import { starterProject } from "./flowTypes";
 import { projectToMermaid, validateMermaid } from "./mermaidCodec";
 import type { NodeKind, NodeStyle } from "./flowTypes";
 import "@xyflow/react/dist/style.css";
+import { FlowNode, type FlowNodeData } from "./FlowNode";
+
+
 
 import {
     Background,
@@ -20,15 +23,18 @@ import {
     type NodeChange,
 } from "@xyflow/react";
 
+
+
 const h = React.createElement;
 
-type FlowNodeData = {
-    label: string;
-    kind: NodeKind;
-    style: NodeStyle;
-};
+
 
 function App() {
+    const nodeTypes = useMemo(() => ({
+        flow: FlowNode
+    }), []);
+
+
     const initialNodes = useMemo<Node<FlowNodeData>[]>(
         () =>
             starterProject.nodes.map((node) => ({
@@ -42,10 +48,12 @@ function App() {
                     kind: node.kind,
                     style: node.style
                 },
-                type: "default",
+                type: "flow",
             })),
         []
     );
+
+
 
     const initialEdges = useMemo<Edge[]>(
         () =>
@@ -61,21 +69,39 @@ function App() {
             []
         );
 
+
+
     const [nodes, setNodes] = useState<Node<FlowNodeData>[]>(initialNodes);
     const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
+
+
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+
+
 
     const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+    const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+
+
+    function updateSelectedEdgeLabel(label: string) {
+        setEdges((current) => current.map((edge) => edge.id === selectedEdgeId ? { ...edge, label: label || undefined } : edge ));
+    }
+
+
 
     function updateSelectedNode(patch: Partial<FlowNodeData>) {
         setNodes((current) => current.map((node) => node.id === selectedNodeId ? { ...node, data: { ...node.data, ...patch } } : node));
     }
 
+
+
     const liveProject = useMemo(
         () => ({
             version: 1 as const,
             title: "Untitled Chart",
+
 
             nodes: nodes.map((node) => ({
                 id: node.id,
@@ -85,14 +111,17 @@ function App() {
                     node.data.label ?? "Untitled"
                 ),
 
+
                 x: node.position.x,
                 y: node.position.y,
             })),
+
 
             edges: edges.map((edge) => ({
                 id: edge.id,
                 source: edge.source,
                 target: edge.target,
+
 
                 label:
                     typeof edge.label === "string"
@@ -103,16 +132,24 @@ function App() {
         [nodes, edges]
     );
 
+
+
     const mermaidText = useMemo(
         () => projectToMermaid(liveProject),
         [liveProject]
     );
 
+
+
     const [validationMessage, setValidationMessage] =
         useState("Validating...");
 
+
+
     const [isValid, setIsValid] =
         useState<boolean | null>(null);
+
+
 
     function onNodesChange(changes: NodeChange<Node<FlowNodeData>>[]) {
         setNodes((current) =>
@@ -120,11 +157,15 @@ function App() {
         );
     }
 
+
+
     function onEdgesChange(changes: EdgeChange<Edge>[]) {
         setEdges((current) =>
             applyEdgeChanges(changes, current)
         );
     }
+
+
 
     function onConnect(connection: Connection) {
         setEdges((current) =>
@@ -141,14 +182,17 @@ function App() {
         );
     }
 
+
+
     function addNode(kind: NodeKind) {
         const id = `${kind}_${Date.now()}`;
+
 
         setNodes((current) => [
             ...current,
             {
                 id,
-                type: "default",
+                type: "flow",
                 position: {
                     x: 120 + current.length * 24,
                     y: 120 + current.length * 24
@@ -162,17 +206,23 @@ function App() {
         ]);
     }
 
+
+
     useEffect(() => {
         async function validate() {
             const result =
                 await validateMermaid(mermaidText);
 
+
             setValidationMessage(result.message);
             setIsValid(result.ok);
         }
 
+
         validate();
     }, [mermaidText]);
+
+
 
     return h(
         "main",
@@ -187,6 +237,8 @@ function App() {
             },
         },
 
+
+
         h(
             "section",
             {
@@ -200,6 +252,8 @@ function App() {
                 },
             },
 
+
+
             h(
                 "p",
                 {
@@ -212,6 +266,8 @@ function App() {
                 "Hello, World!"
             ),
 
+
+
             h(
                 "h1",
                 {
@@ -223,6 +279,8 @@ function App() {
                 "Welcome to Tagless!"
             ),
 
+
+
             h(
                 "p",
                 {
@@ -233,6 +291,8 @@ function App() {
                 },
                 "Make a flowchart!"
             ),
+
+
 
             h(
                 "div",
@@ -264,20 +324,35 @@ function App() {
                 h(
                     ReactFlow,
                     {
+                        nodeTypes,
                         nodes,
                         edges,
                         onNodesChange,
                         onEdgesChange,
                         onConnect,
                         fitView: true,
-                        onNodeClick: (_event, node) => setSelectedNodeId(node.id),
-                        onPaneClick: () => setSelectedNodeId(null)
+                        onNodeClick: (_event, node) => {
+                            setSelectedNodeId(node.id);
+                            setSelectedEdgeId(null);
+                        },
+                        onPaneClick: () => {
+                             setSelectedNodeId(null);
+                             setSelectedEdgeId(null);
+                        },
+                        onEdgeClick: (_event, edge) => {
+                            setSelectedEdgeId(edge.id);
+                            setSelectedNodeId(null);
+                        }
                     },
+
+
 
                     h(Background),
                     h(Controls)
                 )
             ),
+
+
 
             h(
                 "aside",
@@ -294,8 +369,27 @@ function App() {
                 h(
                     "strong",
                     null,
-                    selectedNode ? "Selected Node" : "No Selected Node"
+                    selectedNode ? "Selected Node" : selectedEdge ? "Selected Edge" : "Nothing Selected"
                 ),
+                selectedEdge
+                    ? h(
+                        React.Fragment,
+                        null,
+                        h(
+                            "input",
+                            {
+                                value: typeof selectedEdge.label === "string" ? selectedEdge.label : "",
+                                placeholder: "Edge label",
+                                onChange: (event: React.ChangeEvent<HTMLInputElement>) => updateSelectedEdgeLabel(event.target.value),
+                                style: {
+                                    padding: "10px 12px",
+                                    border: "1px solid oklch(82% 0.02 255)",
+                                    borderRadius: "8px"
+                                }
+                            }
+                        )
+                    )
+                    : null,
                 selectedNode
                     ? h(
                         React.Fragment,
@@ -333,8 +427,11 @@ function App() {
                             h("option", { value: "technical" }, "Technical")
                         )
 
-                    ) : h("p", { style: { margin: 0 } }, "Select a node to edit it." )
+
+                    ) : selectedEdge ? null : h("p", { style: { margin: 0 } }, "Select a node or edge to edit it." )
             ),
+
+
 
             h(
                 "pre",
@@ -353,8 +450,12 @@ function App() {
                     },
                 },
 
+
+
                 mermaidText
             ),
+
+
 
             h(
                 "p",
@@ -365,16 +466,30 @@ function App() {
                     },
                 },
 
+
+
                 validationMessage
             )
         )
     );
 }
 
+
+
+
+
 const root = document.getElementById("root");
+
+
+
+
 
 if (!root) {
     throw new Error("Root element not found");
 }
+
+
+
+
 
 createRoot(root).render(h(App));
