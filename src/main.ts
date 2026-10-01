@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { starterProject } from "./flowTypes";
 import { projectToMermaid, validateMermaid } from "./mermaidCodec";
-import type { NodeKind } from "./flowTypes";
+import type { NodeKind, NodeStyle } from "./flowTypes";
 import "@xyflow/react/dist/style.css";
 
 import {
@@ -25,7 +25,8 @@ const h = React.createElement;
 type FlowNodeData = {
     label: string;
     kind: NodeKind;
-}
+    style: NodeStyle;
+};
 
 function App() {
     const initialNodes = useMemo<Node<FlowNodeData>[]>(
@@ -39,6 +40,7 @@ function App() {
                 data: {
                     label: node.label,
                     kind: node.kind,
+                    style: node.style
                 },
                 type: "default",
             })),
@@ -62,6 +64,14 @@ function App() {
     const [nodes, setNodes] = useState<Node<FlowNodeData>[]>(initialNodes);
     const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+    const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+
+    function updateSelectedNode(patch: Partial<FlowNodeData>) {
+        setNodes((current) => current.map((node) => node.id === selectedNodeId ? { ...node, data: { ...node.data, ...patch } } : node));
+    }
+
     const liveProject = useMemo(
         () => ({
             version: 1 as const,
@@ -69,13 +79,11 @@ function App() {
 
             nodes: nodes.map((node) => ({
                 id: node.id,
-
+                style: node.data.style,
                 kind: node.data.kind,
                 label: String(
                     node.data.label ?? "Untitled"
                 ),
-
-                style: "classic" as const,
 
                 x: node.position.x,
                 y: node.position.y,
@@ -146,8 +154,9 @@ function App() {
                     y: 120 + current.length * 24
                 },
                 data: {
+                    kind,
+                    style: "classic",
                     label: kind === "startEnd" ? "Start/End" : kind === "decision" ? "Decision?" : kind === "note" ? "Note" : "Process",
-                    kind
                 }
             }
         ]);
@@ -261,11 +270,70 @@ function App() {
                         onEdgesChange,
                         onConnect,
                         fitView: true,
+                        onNodeClick: (_event, node) => setSelectedNodeId(node.id),
+                        onPaneClick: () => setSelectedNodeId(null)
                     },
 
                     h(Background),
                     h(Controls)
                 )
+            ),
+
+            h(
+                "aside",
+                {
+                    style: {
+                        margin: "16px 0 0",
+                        padding: "16px",
+                        border: "1px solid oklch(88% 0.018 255)",
+                        borderRadius: "12px",
+                        display: "grid",
+                        gap: "12px"
+                    }
+                },
+                h(
+                    "strong",
+                    null,
+                    selectedNode ? "Selected Node" : "No Selected Node"
+                ),
+                selectedNode
+                    ? h(
+                        React.Fragment,
+                        null,
+                        h(
+                            "select",
+                            {
+                                value: selectedNode.data.kind,
+                                onChange: (event: React.ChangeEvent<HTMLSelectElement>) => updateSelectedNode({ kind: event.target.value as NodeKind }),
+                                style: {
+                                    padding: "10px 12px",
+                                    border: "1px solid oklch(82% 0.02 255)",
+                                    borderRadius: "8px"
+                                }
+                            },
+                            h("option", { value: "startEnd" }, "Start / End"),
+                            h("option", { value: "process" }, "Process"),
+                            h("option", { value: "decision" }, "Decision"),
+                            h("option", { value: "note" }, "Note")
+                        ),
+                        h(
+                            "select",
+                            {
+                                value: selectedNode.data.style,
+                                onChange: (event: React.ChangeEvent<HTMLSelectElement>) => updateSelectedNode({ style: event.target.value as NodeStyle }),
+                                style: {
+                                    padding: "10px 12px",
+                                    border: "1px solid oklch(82% 0.02 255)",
+                                    borderRadius: "8px"
+                                }
+                            },
+                            h("option", { value: "classic" }, "Classic"),
+                            h("option", { value: "compact" }, "Compact"),
+                            h("option", { value: "soft" }, "Soft"),
+                            h("option", { value: "technical" }, "Technical")
+                        )
+
+                    ) : h("p", { style: { margin: 0 } }, "Select a node to edit it." )
             ),
 
             h(
