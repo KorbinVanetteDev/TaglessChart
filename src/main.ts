@@ -1,9 +1,12 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { starterProject } from "./flowTypes";
+import { projectToMermaid } from "./mermaidCodec";
 
 const h = React.createElement;
 
 function App() {
+    const mermaidText = projectToMermaid(starterProject);
     return h(
         "main",
         {
@@ -57,6 +60,23 @@ function App() {
                     },
                 },
                 "Make a flowchart!"
+            ),
+            h(
+                "pre",
+                {
+                    style: {
+                        margin: "24px 0 0",
+                        padding: "16px",
+                        borderRadius: "8px",
+                        overflow: "auto",
+                        background: "oklch(18% 0.02 258)",
+                        color: "white",
+                        fontSize: "14px",
+                        lineHeight: 1.4,
+                        whiteSpace: "pre-wrap",
+                    }
+                },
+                mermaidText
             )
         )
     );

@@ -19,7 +19,7 @@ function nodeLine(node: DiagramNode) {
     return `${id}["${label}"]`;
 }
 
-function edgeLines(edge: DiagramEdge) {
+function edgeLine(edge: DiagramEdge) {
     const source = safeId(edge.source);
     const target = safeId(edge.target);
     const label = safeLabel(edge.label);
@@ -27,4 +27,18 @@ function edgeLines(edge: DiagramEdge) {
     if (!edge.label.trim()) return `${source} --> ${target}`;
 
     return `${source} -->|${label}| ${target}`;
+}
+
+export function projectToMermaid(project: DiagramProject) {
+    const lines = ["flowchart TD"];
+
+    for (const node of project.nodes) {
+        lines.push(`   ${nodeLine(node)}`);
+    }
+
+    for (const edge of project.edges) {
+        lines.push(`   ${edgeLine(edge)}`);
+    }
+
+    return lines.join("\n");
 }
