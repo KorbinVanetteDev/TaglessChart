@@ -7,7 +7,7 @@ export default defineConfig({
         rollupOptions: {
             input: "src/main.ts",
             output: {
-                entryFileNames: "assets/iondex.js",
+                entryFileNames: "assets/index.js",
                 chunkFileNames: "assets/[name].js",
                 assetFileNames: "assets/[name] [extname]",
             },
