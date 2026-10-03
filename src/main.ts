@@ -5,6 +5,7 @@ import { projectToMermaid, validateMermaid } from "./mermaidCodec";
 import type { NodeKind, NodeStyle } from "./flowTypes";
 import "@xyflow/react/dist/style.css";
 import { FlowNode, type FlowNodeData } from "./FlowNode";
+import type { DiagramProject } from "./flowTypes";
 
 
 
@@ -94,6 +95,55 @@ function App() {
     function updateSelectedNode(patch: Partial<FlowNodeData>) {
         setNodes((current) => current.map((node) => node.id === selectedNodeId ? { ...node, data: { ...node.data, ...patch } } : node));
     }
+
+    function downloadText(filename: string, text: string, type: string) {
+        const blob = new Blob([text], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = filename;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    function exportMermaidFile() {
+        downloadText("flowchart.mmd", mermaidText, "text/plain");
+    }
+
+    function exportProjectFile() {
+        downloadText("flowchart.json", JSON.stringify(liveProject, null, 2), "application/json");
+    }
+
+    function importProjectFile(file: File) {
+        file.text().then((text) => {
+            const project = JSON.parse(text) as DiagramProject;
+            
+            setNodes(project.nodes.map((node) => ({
+                id: node.id,
+                type: "flow",
+                position: { x: node.x, y: node.y },
+                data: {
+                    label: node.label,
+                    kind: node.kind,
+                    style: node.style
+                }
+            })));
+
+            setEdges(project.edges.map((edge) => ({
+                id: edge.id,
+                source: edge.source,
+                target: edge.target,
+                label: edge.label || undefined,
+                markerEnd: {
+                    type: MarkerType.ArrowClosed
+                }
+            })));
+        });
+    }
+
+
 
 
 
@@ -429,6 +479,29 @@ function App() {
 
 
                     ) : selectedEdge ? null : h("p", { style: { margin: 0 } }, "Select a node or edge to edit it." )
+            ),
+            h(
+                "div",
+                {
+                    style: {
+                        display: "flex",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                        margin: "16px 0 0"
+                    }
+                },
+                h("button", { onClick: exportMermaidFile }, "Export Mermaid"),
+                h("button", { onClick: exportProjectFile }, "Export Project"),
+                h("input", {
+                    type: "file",
+                    accept: ".json, application/json",
+                    onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+                        const file = event.target.files?.[0];
+                        if (file) {
+                            importProjectFile(file);
+                        }
+                    }
+                })
             ),
 
 
