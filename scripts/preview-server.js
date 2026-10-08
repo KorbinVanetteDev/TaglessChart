@@ -1,9 +1,10 @@
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer } from "node:http";
-import { extName, join, normalize } from "node:path";
+import { extname, join, resolve, sep } from "node:path";
 import { bootDocument } from "./no-tags-document.mjs";
 
 const root = join(process.cwd(), "dist");
+const rootPrefix = root.endsWith(sep) ? root : root + sep;
 
 const types = new Map([
     [".css", "text/css"],
@@ -13,26 +14,29 @@ const types = new Map([
 ]);
 
 const server = createServer((req, res) => {
-    const url = normalize(req.url ?? "/", "http://localhost");
+    const url = new URL(req.url ?? "/", "http://127.0.0.1");
 
     if (url.pathname === "/") {
         res.setHeader("Content-Type", "text/html; charset=UTF-8");
-        res.end(bootDocument("/assets/index.js"));
+        res.end(bootDocument("./assets/index.js", "./assets/main.css"));
         return;
     }
 
-    const path = normalize(join(root, url.pathname));
+    const requestPath = decodeURIComponent(url.pathname).replace(/^[/\\]+/, "");
+    const path = resolve(root, requestPath);
 
-    if(!path.startsWith(root) || !existsSync(path) || !statSync(path).isFile()) {
+    if(!path.startsWith(rootPrefix) || !existsSync(path) || !statSync(path).isFile()) {
         res.statusCode = 404;
         res.end("Not Found");
         return;
     }
 
-    res.setHeader("Content-Type", types.get(extName(path)) ?? "application/octet-stream");
+    res.setHeader("Content-Type", types.get(extname(path)) ?? "application/octet-stream");
     createReadStream(path).pipe(res);
 });
 
-server.listen(8080, "localhost", () => {
-    console.log("Server listening on http://localhost:8080");
+const port = Number(process.env.PORT ?? 4173);
+
+server.listen(port, "127.0.0.1", () => {
+    console.log(`Server listening on http://127.0.0.1:${port}`);
 });

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev-server.js",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node scripts/write-build-document.mjs",
     "preview": "node scripts/preview-server.js",
     "check:no-authored-tags": "node scripts/check-no-authored-tags.js"
   },
@@ -18,5 +18,9 @@
     "react-dom": "^19.3.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
   }
 }
